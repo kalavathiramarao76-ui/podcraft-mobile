@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../widgets/auth_wall.dart';
+import '../services/auth_service.dart';
 import 'summarize_screen.dart';
 import 'clips_screen.dart';
 import 'posts_screen.dart';
@@ -10,8 +12,27 @@ import 'newsletter_screen.dart';
 import 'show_notes_screen.dart';
 import 'settings_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final AuthService _authService = AuthService();
+  bool _showAuthWall = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final needsAuth = await _authService.needsAuth();
+    if (mounted) setState(() => _showAuthWall = needsAuth);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +47,9 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0c0a14),
-      body: SafeArea(
+      body: Stack(
+        children: [
+          SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -127,6 +150,13 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+          if (_showAuthWall)
+            AuthWall(
+              authService: _authService,
+              onSignedIn: () => setState(() => _showAuthWall = false),
+            ),
+        ],
       ),
     );
   }
